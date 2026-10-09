@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerenciar Links</title>
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <link rel="stylesheet" href="./assets/css/admin-links.css" />
+</head>
+<body>
+  <!-- Loading State -->
+  <div id="app-loading">
+    <div class="spinner"></div>
+    <p>Carregando...</p>
+  </div>
+
+  <div class="top-stripe" aria-hidden="true"></div>
+
+  <main class="container app-shell">
+    <!-- HEADER -->
+    <header class="site-header">
+      <div class="header-row">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
+        <div>
+          <h1>Gerenciar Links</h1>
+          <p class="site-subtitle">Importação e inativação em lote de links do portal</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- MENU LATERAL -->
+    <div class="side-menu" id="sideMenu">
+      <div class="side-menu-header">
+        <button class="menu-close" id="menuClose">✕</button>
+      </div>
+      <nav class="side-menu-nav">
+        <div id="menu-container"></div>
+      </nav>
+    </div>
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- NAVEGAÇÃO SUPERIOR -->
+    <div class="nav-quick">
+    <div class="nav-left">
+      <a class="btn btn--nav" href="./portal.html">Portal</a>
+      <a class="btn btn--nav" href="./links.html">Polos</a>
+      <a class="btn btn--nav" href="./diario.html">Diário de Bordo</a>
+      <a class="btn btn--nav" href="./tickets.html" id="tickets-link-nav">
+        Tickets 
+        <span id="tickets-badge-nav" class="badge" style="background-color:#dc2626;">0</span>
+        <span id="tickets-andamento-badge-nav" class="badge" style="background-color:#f59e0b; margin-left:0.2rem;">0</span>
+      </a>
+      <button class="btn btn--nav" id="logout-btn-nav" onclick="logout()">Sair</button>
+    </div>
+    <div class="nav-right">
+      <button class="btn btn--nav" type="button" id="dark-mode-toggle">
+        <span class="mode-text">Modo</span>
+        <span class="mode-icon">🌙</span>
+      </button>
+    </div>
+  </div>
+
+    <!-- RESTRIÇÃO DE ACESSO -->
+    <div id="accessDenied" class="card" style="display: none;">
+      <h2 style="color: var(--accent);">Acesso Restrito</h2>
+      <p>Você precisa ser Super Admin para acessar esta página.</p>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div id="adminContent">
+      
+      <!-- TABS -->
+      <div class="tabs-container">
+        <button class="tab-btn is-active" onclick="switchTab('importTab')">📥 Importação em Lote</button>
+        <button class="tab-btn" onclick="switchTab('manageTab')">📋 Gerenciar Ativos</button>
+      </div>
+
+      <!-- FEEDBACK -->
+      <div id="feedback" class="feedback hidden"></div>
+
+      <!-- LOADING -->
+      <div id="loading" class="loading-state" style="display: none;">
+        <div class="spinner"></div>
+        <p id="loadingText">Processando...</p>
+      </div>
+
+      <!-- ABA 1: IMPORTAÇÃO -->
+      <div id="importTab" class="tab-content is-active">
+        <div class="import-area">
+          <h3>📋 Colar Texto de Links</h3>
+          <p class="text-sm">Cole a mensagem enviada com os links. O sistema identificará automaticamente os dados.</p>
+          
+          <div class="import-example">
+            Exemplo:<br>
+            3424 VESTIBULAR ONLINE - SEDE PRESENCIAL - 2026/2<br>
+            https://forms.gle/...
+          </div>
+
+          <textarea id="importText" class="import-textarea" placeholder="Cole aqui a mensagem com os códigos e links..."></textarea>
+          
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <button class="btn btn--accent" onclick="parseText()">Processar Texto</button>
+            <button class="btn" onclick="document.getElementById('importText').value = ''">Limpar</button>
+          </div>
+        </div>
+
+        <div id="previewArea" class="preview-area" style="display: none;">
+          <div class="preview-header">
+            <h3>Preview de Importação</h3>
+            <button class="btn btn--accent" id="btnConfirmImport" onclick="confirmImport()">Confirmar e Salvar</button>
+          </div>
+          
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Unidade</th>
+                  <th>Tipo / Modalidade</th>
+                  <th>Período</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="previewBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 2: GERENCIAMENTO -->
+      <div id="manageTab" class="tab-content">
+        <div class="manage-actions">
+          <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar links (ex: sede, 3424)..." oninput="filterLinks()" />
+          <button class="btn btn--danger" onclick="confirmBulkDelete()">Inativar Selecionados</button>
+          <span class="manage-count" id="linksCount">0 links cadastrados</span>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" /></th>
+                <th>Código</th>
+                <th>Unidade</th>
+                <th>Processo</th>
+                <th>Período</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="linksBody">
+            </tbody>
+          </table>
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <p>Nenhum link encontrado.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 Nawk &amp; Bentes – Todos os direitos reservados</p>
+  </footer>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqKuf4gC-UCzhrQu3samKeZxVK7kN9Ym4",
+      authDomain: "portal-inscricoes-tickets.firebaseapp.com",
+      projectId: "portal-inscricoes-tickets",
+      storageBucket: "portal-inscricoes-tickets.firebasestorage.app",
+      messagingSenderId: "364717584125",
+      appId: "1:364717584125:web:d7099acf6391325c7cd894",
+      measurementId: "G-DW1WGEE9FS"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  </script>
+
+  <script src="./assets/js/pos-graduacao-modal.js"></script><script src="./assets/js/menu-loader.js"></script>
+  <script src="./assets/js/menu.js"></script>
+  <script src="./assets/js/dark-mode.js"></script>
+  <script src="./assets/js/notificacoes.js"></script>
+  <script src="./assets/js/admin-links.js"></script>
+
+  <script>
+    // Lógica para preencher o perfil do usuário no menu lateral
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const doc = await db.collection('users').doc(user.uid).get();
+          const userData = doc.exists ? doc.data() : { nome: user.displayName || 'Usuário', email: user.email };
+          
+          const fillProfile = () => {
+            const userProfile = document.getElementById('user-profile');
+            const userNameSpan = document.getElementById('user-name');
+            const userEmailSpan = document.getElementById('user-email');
+            if (userProfile && userNameSpan && userEmailSpan) {
+              userNameSpan.textContent = userData.nome || 'Usuário';
+              userEmailSpan.textContent = userData.email || '';
+              userProfile.style.display = 'flex';
+            }
+          };
+
+          if (document.getElementById('user-profile')) {
+            fillProfile();
+          } else {
+            document.addEventListener('menu-loaded', fillProfile, { once: true });
+          }
+        } catch (e) {
+          console.error('Erro ao carregar perfil para o menu:', e);
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
